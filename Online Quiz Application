@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Online Quiz Application</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #74ebd5 0%, #ACB6E5 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      overflow: hidden;
+    }
+    .quiz-container {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+      width: 400px;
+      text-align: center;
+      animation: fadeIn 1s ease;
+    }
+    h2 {
+      margin-bottom: 20px;
+      animation: slideDown 0.6s ease;
+    }
+    .option {
+      display: block;
+      background: #f0f0f0;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.3s, background 0.3s;
+      animation: fadeInUp 0.5s ease;
+    }
+    .option.correct { background: #a8e6cf !important; }
+    .option.wrong { background: #ff8b94 !important; }
+
+    .option:hover {
+      background: #d9eaff;
+      transform: scale(1.05);
+    }
+    #submitBtn {
+      margin-top: 15px;
+      padding: 10px 20px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.3s, transform 0.3s;
+      animation: bounceIn 0.8s ease;
+    }
+    #submitBtn:hover {
+      background: #0056b3;
+      transform: scale(1.1);
+    }
+    #score {
+      font-size: 20px;
+      font-weight: bold;
+      margin-top: 20px;
+      animation: fadeIn 1s ease;
+    }
+    #timer {
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #e63946;
+      animation: pulse 1s infinite;
+    }
+    #progress-container {
+      background: #eee;
+      border-radius: 20px;
+      overflow: hidden;
+      margin-bottom: 15px;
+      height: 12px;
+    }
+    #progress-bar {
+      height: 100%;
+      width: 0;
+      background: #007bff;
+      transition: width 0.4s ease;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from {opacity: 0;}
+      to {opacity: 1;}
+    }
+    @keyframes fadeInUp {
+      from {opacity: 0; transform: translateY(20px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+    @keyframes slideDown {
+      from {opacity: 0; transform: translateY(-30px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+    @keyframes bounceIn {
+      0% {transform: scale(0.5); opacity: 0;}
+      60% {transform: scale(1.2); opacity: 1;}
+      100% {transform: scale(1);}
+    }
+    @keyframes pulse {
+      0% {transform: scale(1);}
+      50% {transform: scale(1.05);}
+      100% {transform: scale(1);}
+    }
+  </style>
+</head>
+<body>
+  <div class="quiz-container">
+    <div id="progress-container">
+      <div id="progress-bar"></div>
+    </div>
+    <h2 id="question">Loading question...</h2>
+    <div id="options"></div>
+    <button id="submitBtn">Submit</button>
+    <p id="timer">Time left: <span id="time">15</span>s</p>
+    <p id="score"></p>
+  </div>
+
+  <script>
+    const quizData = [
+      {
+        question: "Which language runs in a web browser?",
+        options: ["Java", "C", "Python", "JavaScript"],
+        answer: "JavaScript"
+      },
+      {
+        question: "What does CSS stand for?",
+        options: ["Central Style Sheets", "Cascading Style Sheets", "Cascading Simple Sheets", "Cars SUVs Sailboats"],
+        answer: "Cascading Style Sheets"
+      },
+      {
+        question: "What does HTML stand for?",
+        options: ["Hyper Trainer Marking Language", "HyperText Markup Language", "HyperText Marketing Language", "Hyper Tool Multi Language"],
+        answer: "HyperText Markup Language"
+      },
+      {
+        question: "Which company developed JavaScript?",
+        options: ["Mozilla", "Netscape", "Microsoft", "Google"],
+        answer: "Netscape"
+      }
+    ];
+
+    let currentQuestion = 0;
+    let score = 0;
+    let timeLeft = 15;
+    let timer;
+
+    const questionEl = document.getElementById("question");
+    const optionsEl = document.getElementById("options");
+    const submitBtn = document.getElementById("submitBtn");
+    const scoreEl = document.getElementById("score");
+    const timerEl = document.getElementById("time");
+    const progressBar = document.getElementById("progress-bar");
+
+    function loadQuestion() {
+      clearInterval(timer);
+      timeLeft = 15;
+      timerEl.textContent = timeLeft;
+      timer = setInterval(updateTimer, 1000);
+
+      const q = quizData[currentQuestion];
+      questionEl.textContent = q.question;
+      optionsEl.innerHTML = "";
+
+      q.options.forEach(option => {
+        const div = document.createElement("div");
+        div.textContent = option;
+        div.classList.add("option");
+        div.addEventListener("click", () => selectOption(div, option));
+        optionsEl.appendChild(div);
+      });
+
+      updateProgressBar();
+    }
+
+    let selectedAnswer = null;
+
+    function selectOption(div, option) {
+      const allOptions = document.querySelectorAll(".option");
+      allOptions.forEach(opt => opt.style.background = "#f0f0f0");
+      div.style.background = "#a0d8ef";
+      selectedAnswer = option;
+    }
+
+    function updateTimer() {
+      timeLeft--;
+      timerEl.textContent = timeLeft;
+      if (timeLeft <= 0) {
+        clearInterval(timer);
+        checkAnswer();
+      }
+    }
+
+    function checkAnswer() {
+      const correctAnswer = quizData[currentQuestion].answer;
+      const allOptions = document.querySelectorAll(".option");
+
+      allOptions.forEach(opt => {
+        if (opt.textContent === correctAnswer) {
+          opt.classList.add("correct");
+        } else if (opt.textContent === selectedAnswer) {
+          opt.classList.add("wrong");
+        }
+      });
+
+      if (selectedAnswer === correctAnswer) {
+        score++;
+      }
+
+      setTimeout(() => {
+        currentQuestion++;
+        selectedAnswer = null;
+
+        if (currentQuestion < quizData.length) {
+          loadQuestion();
+        } else {
+          endQuiz();
+        }
+      }, 1000);
+    }
+
+    function updateProgressBar() {
+      const progress = ((currentQuestion) / quizData.length) * 100;
+      progressBar.style.width = progress + "%";
+    }
+
+    function endQuiz() {
+      clearInterval(timer);
+      questionEl.textContent = "Quiz Completed!";
+      optionsEl.innerHTML = "";
+      submitBtn.style.display = "none";
+      document.getElementById("timer").style.display = "none";
+
+      let counter = 0;
+      const finalScore = score;
+      const interval = setInterval(() => {
+        if (counter <= finalScore) {
+          scoreEl.textContent = `Your score: ${counter} / ${quizData.length}`;
+          counter++;
+        } else {
+          clearInterval(interval);
+        }
+      }, 200);
+
+      progressBar.style.width = "100%";
+    }
+
+    submitBtn.addEventListener("click", checkAnswer);
+
+    loadQuestion();
+  </script>
+</body>
+</html>
